@@ -1,3 +1,5 @@
+import { IconFirst, IconLast, IconNext, IconPause, IconPlay, IconPrev } from './icons';
+
 interface Props {
   index: number;
   total: number;
@@ -11,48 +13,64 @@ interface Props {
 export function Stepper({ index, total, playing, speed, onIndex, onPlaying, onSpeed }: Props) {
   const last = Math.max(0, total - 1);
   const disabled = total === 0;
+  const atStart = disabled || index === 0;
+  const atEnd = disabled || index >= last;
+  const pct = last === 0 ? 0 : (Math.min(index, last) / last) * 100;
+
   return (
     <div className="stepper" role="group" aria-label="Playback controls">
-      <button onClick={() => onIndex(0)} disabled={disabled || index === 0} aria-label="First step">
-        ⏮
-      </button>
-      <button
-        onClick={() => onIndex(index - 1)}
-        disabled={disabled || index === 0}
-        aria-label="Previous step"
-      >
-        ◀
-      </button>
-      <button
-        className="primary"
-        onClick={() => onPlaying(!playing)}
-        disabled={disabled || index >= last}
-        aria-label={playing ? 'Pause' : 'Play'}
-      >
-        {playing ? '⏸' : '▶'}
-      </button>
-      <button
-        onClick={() => onIndex(index + 1)}
-        disabled={disabled || index >= last}
-        aria-label="Next step"
-      >
-        ▶|
-      </button>
-      <button
-        onClick={() => onIndex(last)}
-        disabled={disabled || index >= last}
-        aria-label="Last step"
-      >
-        ⏭
-      </button>
+      <div className="transport">
+        <button
+          className="icon"
+          onClick={() => onIndex(0)}
+          disabled={atStart}
+          aria-label="First step"
+        >
+          <IconFirst />
+        </button>
+        <button
+          className="icon"
+          onClick={() => onIndex(index - 1)}
+          disabled={atStart}
+          aria-label="Previous step"
+        >
+          <IconPrev />
+        </button>
+        <button
+          className="icon play"
+          onClick={() => onPlaying(!playing)}
+          disabled={atEnd}
+          aria-label={playing ? 'Pause' : 'Play'}
+        >
+          {playing ? <IconPause /> : <IconPlay />}
+        </button>
+        <button
+          className="icon"
+          onClick={() => onIndex(index + 1)}
+          disabled={atEnd}
+          aria-label="Next step"
+        >
+          <IconNext />
+        </button>
+        <button
+          className="icon"
+          onClick={() => onIndex(last)}
+          disabled={atEnd}
+          aria-label="Last step"
+        >
+          <IconLast />
+        </button>
+      </div>
       <input
         type="range"
+        className="scrub"
         min={0}
         max={last}
         value={Math.min(index, last)}
         onChange={(e) => onIndex(Number(e.target.value))}
         disabled={disabled}
         aria-label="Scrub through steps"
+        style={{ ['--p' as string]: `${pct}%` }}
       />
       <span className="count" aria-live="polite">
         {disabled ? '0 / 0' : `${index + 1} / ${total}`}

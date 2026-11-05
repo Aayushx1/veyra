@@ -14,8 +14,12 @@ account or API key is needed.
 - **Live tracer.** The code you type is instrumented and executed; every statement records a
   snapshot of the variables in scope. Step forward and back, scrub, play at 0.5x to 5x, or use the
   arrow keys and space bar.
-- **Data-aware views.** Arrays show per-cell change highlighting and inferred pointer markers
-  (`lo`, `hi`, `i`, `mid`, ...). Maps, sets and objects render as tables and chips.
+- **Debugger-style editor.** Syntax highlighting, a highlighted current line, and inline ghost
+  hints that show what the previous line changed (`sum = 9`). A "what just happened" strip shows the
+  active source line and old to new values.
+- **Data-aware views.** Arrays show per-cell change animation and colour-coded pointer markers
+  (`lo`, `hi`, `i`, `mid`, ...), with the range between a low/high pair shaded. Maps, sets and
+  objects render as tables and chips.
 - **Editable inputs.** Inputs are a JSON array of arguments, validated with readable errors.
   Syntax errors and runtime errors point at the offending line.
 - **Safe by construction.** Execution is isolated in a Web Worker with a statement budget and a hard
@@ -27,10 +31,14 @@ account or API key is needed.
 - **Spaced repetition.** SM-2 scheduling, stored locally, plus one-click Anki export (tab-separated
   import file).
 - **Shareable links.** The code and input are encoded in the URL hash.
-- **Accessible and responsive.** Keyboard operable, labelled controls, live regions, light and dark
-  themes, reduced-motion support, and a mobile layout.
+- **Accessible and responsive.** Keyboard operable (Escape then Tab leaves the editor), labelled
+  controls, live regions, light and dark themes, reduced-motion support, and a mobile layout.
+
+![Light theme](docs/trace-light.png)
 
 ![Comparing growth](docs/compare.png)
+
+<img src="docs/mobile.png" alt="Mobile layout" width="300">
 
 ## Quick start
 

@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { TraceResult } from './core/types';
-import { PROBLEMS, byId } from './problems';
+import type { Step, TraceResult, V } from './core/types';
+import { show } from './core/serialize';
+import { PROBLEMS, byId, type Problem } from './problems';
 import { traceInWorker } from './lib/client';
 import { decodeShare, encodeShare } from './lib/share';
 import { changedVars } from './lib/view';
@@ -9,8 +11,24 @@ import { Stepper } from './components/Stepper';
 import { Value } from './components/Value';
 import { Compare } from './components/Compare';
 import { Review } from './components/Review';
+import {
+  IconCards,
+  IconChart,
+  IconCheck,
+  IconMoon,
+  IconShare,
+  IconSun,
+  IconTrace,
+  Logo,
+} from './components/icons';
 
 type Tab = 'trace' | 'compare' | 'review';
+
+const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
+  { id: 'trace', label: 'Trace', icon: <IconTrace /> },
+  { id: 'compare', label: 'Compare', icon: <IconChart /> },
+  { id: 'review', label: 'Review', icon: <IconCards /> },
+];
 
 const initial = () => {
   const m = /^#s=(.+)$/.exec(location.hash);
@@ -19,6 +37,25 @@ const initial = () => {
   const p = PROBLEMS[0];
   return { pid: p.id as string | null, sol: 0, code: p.solutions[0].code, input: p.input };
 };
+
+/** Colour a complexity class: green is scalable, amber is middling, red grows fast. */
+function tone(c: string): 'good' | 'mid' | 'bad' {
+  if (/^O\((1|log n|n)\)$/.test(c)) return 'good';
+  if (/n log n/.test(c)) return 'mid';
+  return 'bad';
+}
+
+const isFn = (v: V) =>
+  typeof v === 'object' && v !== null && v.t === 'special' && v.s.startsWith('ƒ');
+const clip = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
+
+function Complexity({ c }: { c: string }) {
+  return <span className={`cx cx-${tone(c)}`}>{c}</span>;
+}
+
+function sourceLine(code: string, line?: number) {
+  return line ? (code.split('\n')[line - 1] ?? '').trim() : '';
+}
 
 export function App() {
   const [start] = useState(initial);
@@ -40,7 +77,7 @@ export function App() {
       (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'),
   );
   const runId = useRef(0);
-  const problem = pid ? byId(pid) : undefined;
+  const problem: Problem | undefined = pid ? byId(pid) : undefined;
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -122,69 +159,92 @@ export function App() {
     }
   };
 
-  const step = result?.steps[index];
-  const prev = index > 0 ? result?.steps[index - 1] : undefined;
+  const step: Step | undefined = result?.steps[index];
+  const prev: Step | undefined = index > 0 ? result?.steps[index - 1] : undefined;
   const changed = step ? changedVars(prev, step) : new Set<string>();
-  const stepKeys = step
-    ? Object.keys(step.vars).filter((k) => {
-        const v = step.vars[k];
-        return !(typeof v === 'object' && v !== null && v.t === 'special' && v.s.startsWith('ƒ'));
-      })
-    : [];
+  const visibleKeys = step ? Object.keys(step.vars).filter((k) => !isFn(step.vars[k])) : [];
+
+  // What the previously executed line did: old -> new for each variable that changed.
+  const changes = step && prev ? [...changed].filter((k) => !isFn(step.vars[k])) : [];
+  const hintText = changes
+    .slice(0, 3)
+    .map((k) => `${k} = ${clip(show(step!.vars[k]), 22)}`)
+    .join('   ');
+
+  const groups: ['Easy' | 'Medium' | 'Hard', Problem[]][] = (['Easy', 'Medium', 'Hard'] as const)
+    .map((d) => [d, PROBLEMS.filter((p) => p.difficulty === d)] as [typeof d, Problem[]])
+    .filter(([, list]) => list.length > 0);
 
   return (
     <div className="app">
-      <header>
-        <h1>
-          <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
-            <path
-              d="M7 9l9 15 9-15"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+      <header className="topbar">
+        <h1 className="brand">
+          <Logo />
           Veyra
         </h1>
         <nav aria-label="Sections">
-          {(['trace', 'compare', 'review'] as Tab[]).map((t) => (
-            <button key={t} aria-current={tab === t ? 'page' : undefined} onClick={() => setTab(t)}>
-              {t[0].toUpperCase() + t.slice(1)}
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              aria-current={tab === t.id ? 'page' : undefined}
+              onClick={() => setTab(t.id)}
+            >
+              {t.icon}
+              <span>{t.label}</span>
             </button>
           ))}
         </nav>
         <button
+          className="icon theme"
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
         >
-          {theme === 'dark' ? '☀' : '☾'}
+          {theme === 'dark' ? <IconSun /> : <IconMoon />}
         </button>
       </header>
 
       <main>
         <aside aria-label="Problems">
           <h2>Problems</h2>
-          <ul>
-            {PROBLEMS.map((p) => (
-              <li key={p.id}>
-                <button
-                  aria-current={pid === p.id ? 'true' : undefined}
-                  onClick={() => choose(p.id)}
-                >
-                  <span>{p.title}</span>
-                  <small>{p.pattern}</small>
-                </button>
-              </li>
-            ))}
-          </ul>
+          {groups.map(([d, list]) => (
+            <div key={d} className="group">
+              <p className="group-label">{d}</p>
+              <ul>
+                {list.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      aria-current={pid === p.id ? 'true' : undefined}
+                      onClick={() => choose(p.id)}
+                    >
+                      <span className="p-title">{p.title}</span>
+                      <span className="p-meta">
+                        <span className="pattern">{p.pattern}</span>
+                        <Complexity c={p.solutions[1].complexity} />
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </aside>
 
         {tab === 'review' ? (
           <Review />
         ) : (
           <section className="work" aria-label={tab === 'trace' ? 'Trace' : 'Compare'}>
+            {tab === 'trace' && (
+              <div className="hero">
+                <p className="hero-title">
+                  See your code <em>think</em>.
+                </p>
+                <p className="hero-sub">
+                  Step through real JavaScript and watch every variable, pointer and collection
+                  change. Edit the code or the input and it re-traces instantly.
+                </p>
+              </div>
+            )}
+
             <div className="titlebar">
               <div>
                 <h2>{problem ? problem.title : 'Custom code'}</h2>
@@ -194,11 +254,14 @@ export function App() {
                     : 'Write a function, set a JSON input, and step through it.'}
                 </p>
               </div>
-              <button onClick={share}>Share link</button>
+              <button className="ghostbtn" onClick={share}>
+                <IconShare />
+                Share link
+              </button>
             </div>
             {notice && (
-              <p className="muted small" role="status">
-                {notice}
+              <p className="notice" role="status">
+                <IconCheck /> {notice}
               </p>
             )}
 
@@ -218,13 +281,13 @@ export function App() {
                         aria-pressed={sol === i && code === s.code}
                         onClick={() => choose(problem.id, i)}
                       >
-                        {s.label} <em>{s.complexity}</em>
+                        {s.label} <Complexity c={s.complexity} />
                       </button>
                     ))}
                   </div>
                 )}
                 <div className="grid">
-                  <div>
+                  <div className="left">
                     <CodeEditor
                       value={code}
                       onChange={(v) => {
@@ -233,9 +296,10 @@ export function App() {
                       }}
                       activeLine={step?.line}
                       errorLine={result?.error?.line}
+                      hint={prev && hintText ? { line: prev.line, text: hintText } : undefined}
                     />
                     <label className="field">
-                      Input (JSON array of arguments)
+                      Input · JSON array of arguments
                       <input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
@@ -243,20 +307,27 @@ export function App() {
                       />
                     </label>
                   </div>
-                  <div className="panel">
-                    <Stepper
-                      index={index}
-                      total={total}
-                      playing={playing}
-                      speed={speed}
-                      onIndex={go}
-                      onPlaying={setPlaying}
-                      onSpeed={setSpeed}
-                    />
-                    <div aria-live="polite" className="status">
+
+                  <div className="right">
+                    <div className="panel">
+                      <Stepper
+                        index={index}
+                        total={total}
+                        playing={playing}
+                        speed={speed}
+                        onIndex={go}
+                        onPlaying={setPlaying}
+                        onSpeed={setSpeed}
+                      />
+                      <p className="keys" aria-hidden="true">
+                        <kbd>←</kbd> <kbd>→</kbd> step · <kbd>Space</kbd> play
+                      </p>
+                    </div>
+
+                    <div className="status" aria-live="polite">
                       {busy && (
-                        <p className="muted" role="status">
-                          Tracing…
+                        <p className="muted loading" role="status">
+                          <span className="spinner" /> Tracing…
                         </p>
                       )}
                       {!busy && result?.error && (
@@ -272,36 +343,67 @@ export function App() {
                         </p>
                       )}
                     </div>
-                    <h3>Variables{step ? ` · line ${step.line}` : ''}</h3>
-                    {step ? (
-                      <dl className="vars">
-                        {stepKeys.map((k) => (
-                          <div key={k} className={changed.has(k) ? 'var changed' : 'var'}>
-                            <dt>{k}</dt>
-                            <dd>
-                              <Value
-                                v={step.vars[k]}
-                                prev={prev?.vars[k]}
-                                vars={step.vars}
-                                name={k}
-                              />
-                            </dd>
-                          </div>
-                        ))}
-                        {stepKeys.length === 0 && (
-                          <p className="muted">No variables in scope yet.</p>
+
+                    {step && (
+                      <div className="narrate">
+                        <p className="n-head">
+                          <span>
+                            Step {index + 1} · line {step.line}
+                          </span>
+                        </p>
+                        <code className="n-line">{sourceLine(code, step.line)}</code>
+                        {changes.length > 0 && (
+                          <ul className="n-changes" aria-label="Changes since the previous step">
+                            {changes.slice(0, 4).map((k) => (
+                              <li key={k}>
+                                <b>{k}</b>
+                                {prev && k in prev.vars && (
+                                  <>
+                                    <s>{clip(show(prev.vars[k]), 18)}</s>
+                                    <span aria-hidden="true">→</span>
+                                  </>
+                                )}
+                                <strong>{clip(show(step.vars[k]), 24)}</strong>
+                              </li>
+                            ))}
+                          </ul>
                         )}
-                      </dl>
-                    ) : (
-                      !busy && <p className="muted">Nothing to show.</p>
+                      </div>
                     )}
+
+                    <div className="panel">
+                      <h3>Variables</h3>
+                      {step ? (
+                        <dl className="vars">
+                          {visibleKeys.map((k) => (
+                            <div key={k} className={changed.has(k) ? 'var changed' : 'var'}>
+                              <dt>{k}</dt>
+                              <dd>
+                                <Value
+                                  v={step.vars[k]}
+                                  prev={prev?.vars[k]}
+                                  vars={step.vars}
+                                  name={k}
+                                />
+                              </dd>
+                            </div>
+                          ))}
+                          {visibleKeys.length === 0 && (
+                            <p className="muted">No variables in scope yet.</p>
+                          )}
+                        </dl>
+                      ) : (
+                        !busy && <p className="muted">Nothing to show.</p>
+                      )}
+                    </div>
+
                     {result && !result.error && result.result !== undefined && (
-                      <div className="result">
+                      <div className="panel result">
                         <h3>Returned</h3>
                         <Value v={result.result} />
                         <p className="muted small">
-                          {result.ops.toLocaleString()} statements, {Math.round(result.durationMs)}{' '}
-                          ms
+                          {result.ops.toLocaleString()} statements ·{' '}
+                          {Math.max(1, Math.round(result.durationMs))} ms
                         </p>
                       </div>
                     )}

@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { highlight } from '../lib/highlight';
 
 interface Props {
   value: string;
@@ -6,21 +7,29 @@ interface Props {
   /** 1-based line currently executing in the trace. */
   activeLine?: number;
   errorLine?: number;
+  /** Ghost annotation shown after a line, e.g. "sum = 12". */
+  hint?: { line: number; text: string };
 }
 
 const LINE_PX = 22;
+const PAD_Y = 10;
+const PAD_X = 14;
 
-/** A plain textarea with a line gutter and an execution-line highlight; no editor dependency. */
-export function CodeEditor({ value, onChange, activeLine, errorLine }: Props) {
-  const [scroll, setScroll] = useState(0);
-  const ref = useRef<HTMLTextAreaElement>(null);
-  const lines = value.split('\n').length;
+/**
+ * Syntax-highlighted editor without an editor dependency: a transparent textarea sits over a
+ * highlighted, non-interactive rendering of the same text. Both use identical font metrics.
+ */
+export function CodeEditor({ value, onChange, activeLine, errorLine, hint }: Props) {
+  const [scroll, setScroll] = useState({ top: 0, left: 0 });
+  const lines = useMemo(() => highlight(value), [value]);
+  const src = value.split('\n');
+  const escaped = useRef(false);
 
   return (
     <div className="editor">
       <div className="gutter" aria-hidden="true">
-        <div style={{ transform: `translateY(${-scroll}px)` }}>
-          {Array.from({ length: lines }, (_, i) => (
+        <div style={{ transform: `translateY(${-scroll.top}px)`, paddingTop: PAD_Y }}>
+          {lines.map((_, i) => (
             <div key={i} className={i + 1 === activeLine ? 'gl active' : 'gl'}>
               {i + 1}
             </div>
@@ -32,28 +41,59 @@ export function CodeEditor({ value, onChange, activeLine, errorLine }: Props) {
           <div
             className="hl"
             aria-hidden="true"
-            style={{ top: (activeLine - 1) * LINE_PX + 8 - scroll }}
+            style={{ top: (activeLine - 1) * LINE_PX + PAD_Y - scroll.top }}
           />
         ) : null}
         {errorLine ? (
           <div
             className="hl err"
             aria-hidden="true"
-            style={{ top: (errorLine - 1) * LINE_PX + 8 - scroll }}
+            style={{ top: (errorLine - 1) * LINE_PX + PAD_Y - scroll.top }}
           />
         ) : null}
+        <pre
+          className="code"
+          aria-hidden="true"
+          style={{ transform: `translate(${-scroll.left}px, ${-scroll.top}px)` }}
+        >
+          {lines.map((toks, i) => (
+            <div key={i} className="cl">
+              {toks.map((t, j) => (
+                <span key={j} className={`tk-${t.type}`}>
+                  {t.text}
+                </span>
+              ))}
+              {'​'}
+            </div>
+          ))}
+        </pre>
+        {hint && hint.line <= src.length ? (
+          <span
+            className="ghost"
+            aria-hidden="true"
+            style={{
+              top: (hint.line - 1) * LINE_PX + PAD_Y - scroll.top,
+              left: `calc(${PAD_X}px + ${src[hint.line - 1].length + 3}ch - ${scroll.left}px)`,
+            }}
+          >
+            <span>{hint.text}</span>
+          </span>
+        ) : null}
         <textarea
-          ref={ref}
           aria-label="Code editor"
           spellCheck={false}
           autoCapitalize="off"
           autoCorrect="off"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onScroll={(e) => setScroll(e.currentTarget.scrollTop)}
+          onScroll={(e) =>
+            setScroll({ top: e.currentTarget.scrollTop, left: e.currentTarget.scrollLeft })
+          }
           onKeyDown={(e) => {
-            if (e.key === 'Tab' && !e.shiftKey) {
-              // Keep Tab useful for indenting; Escape then Tab leaves the editor.
+            if (e.key === 'Escape') escaped.current = true;
+            else if (e.key !== 'Tab') escaped.current = false;
+            if (e.key === 'Tab' && !e.shiftKey && !escaped.current) {
+              // Tab indents; press Escape first to move focus onward with the keyboard.
               e.preventDefault();
               const t = e.currentTarget;
               const { selectionStart: s, selectionEnd: en } = t;

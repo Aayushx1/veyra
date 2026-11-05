@@ -92,3 +92,37 @@ describe('view helpers', () => {
     }
   });
 });
+
+import { highlight } from '../src/lib/highlight';
+import { toneOf, windowFor } from '../src/lib/view';
+
+describe('highlighter', () => {
+  it('classifies tokens and keeps one entry per source line', () => {
+    const escaped = String.raw`'a\'b'`;
+    const lines = highlight(`const x = foo(1); // hi\nreturn ${escaped};`);
+    expect(lines).toHaveLength(2);
+    const types = lines[0].map((t) => t.type);
+    expect(types).toContain('keyword');
+    expect(types).toContain('call');
+    expect(types).toContain('number');
+    expect(types).toContain('comment');
+    expect(lines[1].some((t) => t.type === 'string' && t.text === escaped)).toBe(true);
+    // concatenating tokens must reproduce the source exactly (alignment with the textarea)
+    const src = 'a /* x\ny */ b\n\n  `t${1}`';
+    expect(
+      highlight(src)
+        .map((l) => l.map((t) => t.text).join(''))
+        .join('\n'),
+    ).toBe(src);
+  });
+});
+
+describe('pointer window and tones', () => {
+  it('finds the range between lo and hi and gives stable tones', () => {
+    expect(windowFor({ 1: ['lo'], 4: ['hi'] })).toEqual([1, 4]);
+    expect(windowFor({ 4: ['lo'], 1: ['hi'] })).toBeNull();
+    expect(windowFor({ 2: ['i'] })).toBeNull();
+    expect(toneOf('lo')).toBe(toneOf('lo'));
+    expect(toneOf('hi')).toBeLessThan(6);
+  });
+});

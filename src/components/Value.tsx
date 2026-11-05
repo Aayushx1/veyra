@@ -1,8 +1,6 @@
 import type { V } from '../core/types';
 import { show } from '../core/serialize';
-import { changedCells, isArr, pointersFor, type ArrV } from '../lib/view';
-
-const scalar = (v: V) => show(v);
+import { changedCells, isArr, pointersFor, toneOf, windowFor, type ArrV } from '../lib/view';
 
 function Cells({
   arr,
@@ -14,17 +12,31 @@ function Cells({
   pointers?: Record<number, string[]>;
 }) {
   const changed = changedCells(prev, arr);
+  const win = pointers ? windowFor(pointers) : null;
   return (
     <ol className="cells" aria-label={`array of ${arr.items.length + arr.more} items`}>
-      {arr.items.map((x, i) => (
-        <li key={i} className={changed.has(i) ? 'cell changed' : 'cell'}>
-          <span className="ptrs" aria-hidden={!pointers?.[i]}>
-            {pointers?.[i]?.join(' ') ?? ''}
-          </span>
-          <span className="cellval">{typeof x === 'object' && x ? show(x) : scalar(x)}</span>
-          <span className="idx">{i}</span>
-        </li>
-      ))}
+      {arr.items.map((x, i) => {
+        const cls = [
+          'cell',
+          changed.has(i) ? 'changed' : '',
+          win && i >= win[0] && i <= win[1] ? 'inwin' : '',
+        ]
+          .filter(Boolean)
+          .join(' ');
+        return (
+          <li key={i} className={cls}>
+            <span className="ptrs">
+              {pointers?.[i]?.map((n) => (
+                <span key={n} className={`ptr tone-${toneOf(n)}`}>
+                  {n}
+                </span>
+              ))}
+            </span>
+            <span className="cellval">{show(x)}</span>
+            <span className="idx">{i}</span>
+          </li>
+        );
+      })}
       {arr.more > 0 && <li className="cell more">+{arr.more}</li>}
     </ol>
   );
@@ -85,5 +97,5 @@ export function Value({
       );
     }
   }
-  return <code className="scalar">{scalar(v)}</code>;
+  return <code className="scalar">{show(v)}</code>;
 }

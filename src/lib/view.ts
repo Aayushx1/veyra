@@ -45,3 +45,52 @@ export function pointersFor(
   }
   return out;
 }
+
+const PRESET_TONE: Record<string, number> = {
+  i: 0,
+  lo: 0,
+  left: 0,
+  l: 0,
+  start: 0,
+  slow: 0,
+  p: 0,
+  j: 1,
+  hi: 1,
+  right: 1,
+  r: 1,
+  end: 1,
+  fast: 1,
+  q: 1,
+  k: 2,
+  mid: 2,
+};
+
+/** Stable colour slot (0-5) for a variable name. Conventional pairs get clearly different hues. */
+export function toneOf(name: string): number {
+  const preset = PRESET_TONE[name.toLowerCase()];
+  if (preset !== undefined) return preset;
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return 3 + (h % 3);
+}
+
+const PAIRS: [string, string][] = [
+  ['lo', 'hi'],
+  ['left', 'right'],
+  ['l', 'r'],
+  ['start', 'end'],
+];
+
+/** If a conventional low/high pointer pair is present, the inclusive index range between them. */
+export function windowFor(pointers: Record<number, string[]>): [number, number] | null {
+  const where = new Map<string, number>();
+  for (const [idx, names] of Object.entries(pointers)) {
+    for (const n of names) where.set(n.toLowerCase(), Number(idx));
+  }
+  for (const [a, b] of PAIRS) {
+    const x = where.get(a);
+    const y = where.get(b);
+    if (x !== undefined && y !== undefined && x <= y) return [x, y];
+  }
+  return null;
+}
