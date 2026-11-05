@@ -37,7 +37,7 @@ account or API key is needed.
 Requires Node.js 20 or newer.
 
 ```bash
-git clone https://github.com/Aayush0016/veyra.git
+git clone https://github.com/Aayushx1/veyra.git
 cd veyra
 npm ci
 npm run dev        # http://localhost:5173
