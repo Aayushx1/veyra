@@ -21,7 +21,9 @@ function patternNames(p: N, out: string[]): void {
       out.push(p.name);
       break;
     case 'ObjectPattern':
-      p.properties.forEach((x: N) => patternNames(x.type === 'RestElement' ? x.argument : x.value, out));
+      p.properties.forEach((x: N) =>
+        patternNames(x.type === 'RestElement' ? x.argument : x.value, out),
+      );
       break;
     case 'ArrayPattern':
       p.elements.forEach((x: N) => patternNames(x, out));
@@ -134,7 +136,8 @@ export function instrument(source: string): Instrumented {
         return body(s.alternate, scopes);
       case 'ForStatement': {
         const names: string[] = [];
-        if (s.init?.type === 'VariableDeclaration') s.init.declarations.forEach((d: N) => patternNames(d.id, names));
+        if (s.init?.type === 'VariableDeclaration')
+          s.init.declarations.forEach((d: N) => patternNames(d.id, names));
         const inner = [...scopes, names];
         [s.init, s.test, s.update].forEach((x) => x && expr(x, inner));
         return body(s.body, inner);
@@ -142,7 +145,8 @@ export function instrument(source: string): Instrumented {
       case 'ForInStatement':
       case 'ForOfStatement': {
         const names: string[] = [];
-        if (s.left.type === 'VariableDeclaration') s.left.declarations.forEach((d: N) => patternNames(d.id, names));
+        if (s.left.type === 'VariableDeclaration')
+          s.left.declarations.forEach((d: N) => patternNames(d.id, names));
         const inner = [...scopes, names];
         expr(s.right, inner);
         return body(s.body, inner);
@@ -181,7 +185,11 @@ export function instrument(source: string): Instrumented {
   /** Generic walk that only cares about nested functions (closures, methods, callbacks). */
   const expr = (n: N, scopes: string[][]): void => {
     if (!n || typeof n.type !== 'string') return;
-    if (n.type === 'FunctionExpression' || n.type === 'ArrowFunctionExpression' || n.type === 'FunctionDeclaration') {
+    if (
+      n.type === 'FunctionExpression' ||
+      n.type === 'ArrowFunctionExpression' ||
+      n.type === 'FunctionDeclaration'
+    ) {
       return fn(n, scopes);
     }
     for (const k of Object.keys(n)) {

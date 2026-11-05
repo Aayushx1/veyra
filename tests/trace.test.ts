@@ -65,13 +65,20 @@ describe('runTrace', () => {
   });
 
   it('reports runtime errors with the line reached', () => {
-    const r = runTrace({ code: 'function f(a) {\n  const x = a.b.c;\n  return x;\n}', args: '[{}]' });
+    const r = runTrace({
+      code: 'function f(a) {\n  const x = a.b.c;\n  return x;\n}',
+      args: '[{}]',
+    });
     expect(r.error?.line).toBe(2);
     expect(r.error?.message).toMatch(/undefined|Cannot read/);
   });
 
   it('stops runaway loops at the op limit', () => {
-    const r = runTrace({ code: 'function f() { let i = 0; while (true) { i++; } }', args: '[]', maxOps: 500 });
+    const r = runTrace({
+      code: 'function f() { let i = 0; while (true) { i++; } }',
+      args: '[]',
+      maxOps: 500,
+    });
     expect(r.error?.message).toMatch(/infinite loop/);
   });
 
@@ -91,8 +98,12 @@ describe('runTrace', () => {
     expect(runTrace({ code: twoSum, args: '{oops' }).error?.message).toMatch(/JSON array/);
     expect(runTrace({ code: twoSum, args: '5' }).error?.message).toMatch(/JSON array/);
     expect(runTrace({ code: 'const a = 1;', args: '[]' }).error?.message).toMatch(/No function/);
-    expect(runTrace({ code: twoSum, args: '[]', entry: 'nope' }).error?.message).toMatch(/not found/);
-    expect(runTrace({ code: twoSum, args: '[]', entry: 'a;b' }).error?.message).toMatch(/not a valid/);
+    expect(runTrace({ code: twoSum, args: '[]', entry: 'nope' }).error?.message).toMatch(
+      /not found/,
+    );
+    expect(runTrace({ code: twoSum, args: '[]', entry: 'a;b' }).error?.message).toMatch(
+      /not a valid/,
+    );
   });
 
   it('does not expose network globals to user code', () => {

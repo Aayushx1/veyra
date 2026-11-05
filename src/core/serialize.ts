@@ -30,11 +30,19 @@ export function serialize(v: unknown, depth = 0, path: object[] = []): V {
   const sub = (x: unknown) => serialize(x, depth + 1, next);
 
   if (Array.isArray(o)) {
-    return { t: 'arr', items: o.slice(0, MAX_ITEMS).map(sub), more: Math.max(0, o.length - MAX_ITEMS) };
+    return {
+      t: 'arr',
+      items: o.slice(0, MAX_ITEMS).map(sub),
+      more: Math.max(0, o.length - MAX_ITEMS),
+    };
   }
   if (o instanceof Set) {
     const all = [...o];
-    return { t: 'set', items: all.slice(0, MAX_ITEMS).map(sub), more: Math.max(0, all.length - MAX_ITEMS) };
+    return {
+      t: 'set',
+      items: all.slice(0, MAX_ITEMS).map(sub),
+      more: Math.max(0, all.length - MAX_ITEMS),
+    };
   }
   if (o instanceof Map) {
     const all = [...o.entries()];
@@ -47,7 +55,9 @@ export function serialize(v: unknown, depth = 0, path: object[] = []): V {
   const keys = Object.keys(o);
   return {
     t: 'obj',
-    entries: keys.slice(0, MAX_ITEMS).map((k) => [k, sub((o as Record<string, unknown>)[k])] as [string, V]),
+    entries: keys
+      .slice(0, MAX_ITEMS)
+      .map((k) => [k, sub((o as Record<string, unknown>)[k])] as [string, V]),
     more: Math.max(0, keys.length - MAX_ITEMS),
   };
 }
