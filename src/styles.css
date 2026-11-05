@@ -333,6 +333,26 @@ footer {
   border-top: 1px dashed var(--line);
 }
 
+.support {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 600 0.82rem var(--font-mono);
+  color: var(--accent);
+  text-decoration: none;
+  padding: 7px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.support:hover {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
 /* ---------- Home ---------- */
 .hero {
   padding: 28px 0 40px;
@@ -1619,6 +1639,29 @@ polyline.series {
   }
 }
 @media (max-width: 560px) {
+  .topbar {
+    gap: 6px;
+  }
+  .topbar nav a {
+    padding: 6px 5px;
+    font-size: 0.8rem;
+  }
+  .topbar .ghostbtn,
+  .topbar button.icon {
+    padding: 7px 9px;
+  }
+  /* Icon-only on phones; the label stays available to screen readers. */
+  .support span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .support {
+    padding: 8px;
+  }
   .cmd {
     flex-direction: column;
   }

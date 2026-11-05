@@ -359,6 +359,28 @@ test.describe('layout and accessibility', () => {
     await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
   });
 
+  test('support links point at Buy Me a Coffee and open safely', async ({ page }) => {
+    await page.goto('/');
+    const links = page.getByRole('link', { name: /Buy me a coffee/i });
+    await expect(links).toHaveCount(2); // navbar + footer
+    for (const link of await links.all()) {
+      await expect(link).toHaveAttribute('href', 'https://www.buymeacoffee.com/Aayushx1');
+      await expect(link).toHaveAttribute('target', '_blank');
+      await expect(link).toHaveAttribute('rel', /noopener/);
+    }
+  });
+
+  test('no third-party scripts are loaded', async ({ page }) => {
+    const external: string[] = [];
+    page.on('request', (r) => {
+      const u = new URL(r.url());
+      if (u.hostname !== 'localhost') external.push(r.url());
+    });
+    await page.goto('/');
+    await page.waitForTimeout(500);
+    expect(external).toEqual([]);
+  });
+
   test('theme toggle switches and persists', async ({ page }) => {
     await page.goto('/');
     const before = await page.evaluate(() => document.documentElement.dataset.theme);

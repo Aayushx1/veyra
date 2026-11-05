@@ -102,3 +102,11 @@ export function Logo({ size = 28 }: { size?: number }) {
     </svg>
   );
 }
+
+export const IconCoffee = make(
+  <>
+    <path d="M4 9h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z" />
+    <path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17" />
+    <path d="M8 3v2M12 3v2" />
+  </>,
+);

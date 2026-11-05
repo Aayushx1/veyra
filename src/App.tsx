@@ -12,7 +12,8 @@ import { Review } from './components/Review';
 import { DataView } from './components/DataView';
 import { AnkiGuide } from './components/AnkiGuide';
 import { SettingsDialog } from './components/Settings';
-import { IconMoon, IconSun, Logo } from './components/icons';
+import { IconCoffee, IconMoon, IconSun, Logo } from './components/icons';
+import { SUPPORT_URL } from './config';
 
 const NAV: { label: string; to: string; match: Route['name'][] }[] = [
   { label: 'Topics', to: href.home, match: ['home', 'category', 'problem', 'generate', 'shared'] },
@@ -154,6 +155,16 @@ function Shell() {
             </a>
           ))}
         </nav>
+        <a
+          className="support"
+          href={SUPPORT_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Buy me a coffee (opens in a new tab)"
+        >
+          <IconCoffee />
+          <span>Support</span>
+        </a>
         <button className="ghostbtn" onClick={() => setSettings(true)} aria-label="AI settings">
           AI
         </button>
@@ -174,7 +185,10 @@ function Shell() {
         <p>
           Veyra runs your code locally in a Web Worker. Nothing is uploaded. Not affiliated with
           LeetCode; problem titles belong to their owners. Explanations, code and visuals here are
-          original.
+          original.{' '}
+          <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">
+            Enjoying Veyra? Buy me a coffee ↗
+          </a>
         </p>
       </footer>
       <SettingsDialog open={settings} onClose={() => setSettings(false)} />

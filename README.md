@@ -11,6 +11,8 @@ account.
 
 **Live demo:** https://aayushx1.github.io/veyra/
 
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFB347?style=flat&logo=buymeacoffee&logoColor=black)](https://www.buymeacoffee.com/Aayushx1)
+
 ![Home](docs/home.png)
 
 ## What you get
@@ -135,6 +137,12 @@ Used only for problems outside the library; everything else works offline.
 - [ ] Study paths (curated orders such as "first 30 problems")
 - [ ] Split the problem library into lazily loaded chunks
 - [ ] Step bookmarks and annotations
+
+## Support
+
+Veyra is free and runs entirely in your browser. If it helps you practise, you can
+[buy me a coffee](https://www.buymeacoffee.com/Aayushx1). It is a plain link, so the app itself
+loads no third-party scripts.
 
 ## License
 
