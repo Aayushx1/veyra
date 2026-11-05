@@ -41,10 +41,6 @@ account.
 - **Accessible and responsive.** Skip link, labelled controls, live regions, keyboard operation
   (Escape then Tab leaves the editor), light and dark themes, reduced-motion support, mobile layout.
 
-![Tracing a two-pointer solution](docs/trace.png)
-
-![Racing the two solutions](docs/compare.png)
-
 <table>
   <tr>
     <td><img src="docs/category.png" alt="A topic page" width="480"></td>
