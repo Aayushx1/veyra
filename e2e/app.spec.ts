@@ -362,7 +362,7 @@ test.describe('layout and accessibility', () => {
   test('support links point at Buy Me a Coffee and open safely', async ({ page }) => {
     await page.goto('/');
     const links = page.getByRole('link', { name: /Buy me a coffee/i });
-    await expect(links).toHaveCount(2); // navbar + footer
+    await expect(links).toHaveCount(3); // navbar, home call-to-action, footer
     for (const link of await links.all()) {
       await expect(link).toHaveAttribute('href', 'https://www.buymeacoffee.com/Aayushx1');
       await expect(link).toHaveAttribute('target', '_blank');

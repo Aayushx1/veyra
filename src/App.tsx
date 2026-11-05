@@ -12,7 +12,7 @@ import { Review } from './components/Review';
 import { DataView } from './components/DataView';
 import { AnkiGuide } from './components/AnkiGuide';
 import { SettingsDialog } from './components/Settings';
-import { IconCoffee, IconMoon, IconSun, Logo } from './components/icons';
+import { CoffeeCup, IconMoon, IconSun, Logo } from './components/icons';
 import { SUPPORT_URL } from './config';
 
 const NAV: { label: string; to: string; match: Route['name'][] }[] = [
@@ -162,7 +162,7 @@ function Shell() {
           rel="noopener noreferrer"
           aria-label="Buy me a coffee (opens in a new tab)"
         >
-          <IconCoffee />
+          <CoffeeCup />
           <span>Support</span>
         </a>
         <button className="ghostbtn" onClick={() => setSettings(true)} aria-label="AI settings">

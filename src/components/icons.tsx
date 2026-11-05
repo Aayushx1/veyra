@@ -110,3 +110,31 @@ export const IconCoffee = make(
     <path d="M8 3v2M12 3v2" />
   </>,
 );
+
+/** Animated cup: steam wisps rise on a loop (disabled under prefers-reduced-motion). */
+export function CoffeeCup({ size = 18 }: { size?: number }) {
+  return (
+    <svg
+      className="cup"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <g className="cup-body">
+        <path d="M4 10h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z" />
+        <path d="M17 12h1.5a2.5 2.5 0 0 1 0 5H17" />
+      </g>
+      <g className="steam">
+        <path d="M8 6.5c-1-1 1-2 0-3" />
+        <path d="M11.5 6.5c-1-1 1-2 0-3" />
+        <path d="M15 6.5c-1-1 1-2 0-3" />
+      </g>
+    </svg>
+  );
+}

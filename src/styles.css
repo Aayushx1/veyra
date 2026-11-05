@@ -336,21 +336,120 @@ footer {
 .support {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font: 600 0.82rem var(--font-mono);
-  color: var(--accent);
+  gap: 8px;
+  font: 700 0.82rem var(--font-mono);
+  color: var(--accent-ink);
   text-decoration: none;
-  padding: 7px 12px;
-  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  padding: 7px 13px;
+  border: 1px solid var(--accent);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  background: var(--accent);
   transition:
-    background 0.15s,
-    color 0.15s;
+    transform 0.15s,
+    filter 0.15s;
 }
 .support:hover {
-  background: var(--accent);
   color: var(--accent-ink);
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+.support .cup {
+  overflow: visible;
+}
+.support:hover .cup-body {
+  transform: rotate(-10deg);
+}
+.cup-body {
+  transform-origin: 50% 90%;
+  transition: transform 0.2s;
+}
+.steam path {
+  opacity: 0.85;
+}
+.support.big {
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.coffee-cta {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin: 44px 0 8px;
+  padding: 26px 28px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 60%, transparent);
+  border-radius: 14px;
+  background:
+    radial-gradient(
+      500px 160px at 0% 50%,
+      color-mix(in srgb, var(--accent) 14%, transparent),
+      transparent 70%
+    ),
+    var(--panel);
+}
+.coffee-cta h2 {
+  font-size: 1.15rem;
+}
+.coffee-cta p {
+  color: var(--muted);
+  margin-top: 6px;
+  max-width: 56ch;
+}
+.coffee-cta > div {
+  flex: 1;
+  min-width: 0;
+}
+.cta-cup {
+  color: var(--accent);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .steam path {
+    opacity: 0;
+    animation: steam 2.6s ease-in-out infinite;
+  }
+  .steam path:nth-child(2) {
+    animation-delay: 0.55s;
+  }
+  .steam path:nth-child(3) {
+    animation-delay: 1.1s;
+  }
+  .support {
+    animation: glow 3.2s ease-in-out infinite;
+  }
+  .support:hover {
+    animation-play-state: paused;
+  }
+}
+@keyframes steam {
+  0% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  35% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 0%, transparent);
+  }
 }
 
 /* ---------- Home ---------- */
@@ -1639,6 +1738,10 @@ polyline.series {
   }
 }
 @media (max-width: 560px) {
+  .coffee-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
   .topbar {
     gap: 6px;
   }

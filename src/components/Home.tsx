@@ -4,6 +4,8 @@ import { parseProblemSlug } from '../lib/leetcode';
 import { href } from '../lib/router';
 import { loadSession } from '../lib/store';
 import { useApp } from '../state';
+import { SUPPORT_URL } from '../config';
+import { CoffeeCup } from './icons';
 
 const EXAMPLES = ['two-sum', 'valid-parentheses', 'climbing-stairs', 'number-of-islands'];
 
@@ -175,6 +177,28 @@ export function Home() {
           ))}
         </ol>
       </section>
+
+      <aside className="coffee-cta" aria-labelledby="coffee-h">
+        <span className="cta-cup">
+          <CoffeeCup size={56} />
+        </span>
+        <div>
+          <h2 id="coffee-h">Veyra is free. Keep it that way.</h2>
+          <p>
+            If it saved you time or finally made an algorithm click, a coffee helps fund new
+            problems, Python support and more visualizations.
+          </p>
+        </div>
+        <a
+          className="support big"
+          href={SUPPORT_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Buy me a coffee (opens in a new tab)"
+        >
+          Buy me a coffee
+        </a>
+      </aside>
     </div>
   );
 }
