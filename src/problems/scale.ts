@@ -1,8 +1,5 @@
 /** Worst-case-ish input generators, used by compare mode to chart statement counts vs size. */
-export interface Scale {
-  sizes: number[];
-  make: (n: number) => string;
-}
+import type { Scale } from './types';
 
 const range = (n: number) => Array.from({ length: n }, (_, i) => i + 1);
 const DEFAULT_SIZES = [4, 8, 16, 32, 64];
