@@ -135,4 +135,6 @@ export interface Problem {
   solutions: [Solution, Solution];
   /** Optional input generator for the compare chart. */
   scale?: Scale;
+  /** True for pages produced by the in-browser AI generator (stored locally, verified by running). */
+  generated?: boolean;
 }

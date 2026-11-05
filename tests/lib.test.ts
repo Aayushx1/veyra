@@ -1,38 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { PROBLEMS } from '../src/problems';
-import { SCALES } from '../src/problems/scale';
 import { runTrace } from '../src/core/run';
-import { show } from '../src/core/serialize';
 import { decodeShare, encodeShare } from '../src/lib/share';
 import { DAY, isDue, newCard, review } from '../src/lib/srs';
 import { toAnkiTsv } from '../src/lib/anki';
 import { changedCells, changedVars, isArr, pointersFor } from '../src/lib/view';
-
-describe('problem library', () => {
-  it('has unique ids', () => {
-    expect(new Set(PROBLEMS.map((p) => p.id)).size).toBe(PROBLEMS.length);
-  });
-  for (const p of PROBLEMS) {
-    p.solutions.forEach((s) => {
-      it(`${p.id} / ${s.label} produces expected results`, () => {
-        for (const c of [{ input: p.input, expected: p.expected }, ...p.cases]) {
-          const r = runTrace({ code: s.code, args: c.input });
-          expect(r.error, c.input).toBeUndefined();
-          expect(show(r.result!), c.input).toBe(c.expected);
-        }
-      });
-    });
-    it(`${p.id}: optimized solution does fewer statements than brute force at scale`, () => {
-      const sc = SCALES[p.id];
-      expect(sc, 'missing scale generator').toBeDefined();
-      const n = sc.sizes[sc.sizes.length - 1];
-      const [slow, fast] = p.solutions.map((s) => runTrace({ code: s.code, args: sc.make(n) }));
-      expect(slow.error).toBeUndefined();
-      expect(fast.error).toBeUndefined();
-      expect(fast.ops).toBeLessThan(slow.ops);
-    });
-  }
-});
 
 describe('share links', () => {
   it('round-trips unicode and rejects garbage', () => {

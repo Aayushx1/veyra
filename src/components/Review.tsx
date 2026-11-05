@@ -1,33 +1,34 @@
 import { useMemo, useState } from 'react';
-import { PROBLEMS } from '../problems';
 import { isDue, loadDeck, newCard, review, saveDeck, type Deck, type Grade } from '../lib/srs';
 import { toAnkiTsv } from '../lib/anki';
+import { href } from '../lib/router';
+import { useApp } from '../state';
+import { download } from './DataView';
 
-function download(name: string, text: string) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/tab-separated-values' }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name;
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 500);
-}
+const NEW_PER_SESSION = 10;
 
-const GRADES: { g: Grade; label: string }[] = [
-  { g: 0, label: 'Again' },
-  { g: 3, label: 'Hard' },
-  { g: 4, label: 'Good' },
-  { g: 5, label: 'Easy' },
+const GRADES: { g: Grade; label: string; hint: string }[] = [
+  { g: 0, label: 'Again', hint: 'tomorrow' },
+  { g: 3, label: 'Hard', hint: 'soon' },
+  { g: 4, label: 'Good', hint: 'normal' },
+  { g: 5, label: 'Easy', hint: 'later' },
 ];
 
 /** Spaced-repetition review of the pattern and memory hook for each problem. */
 export function Review() {
+  const { all } = useApp();
   const [deck, setDeck] = useState<Deck>(() => loadDeck());
   const [shown, setShown] = useState(false);
   const [now] = useState(() => Date.now());
-  const due = useMemo(() => PROBLEMS.filter((p) => isDue(deck[p.id], now)), [deck, now]);
-  const current = due[0];
+
+  // Cards you have seen and that are due come first, then a few new ones per session.
+  const queue = useMemo(() => {
+    const seen = all.filter((p) => deck[p.id] && isDue(deck[p.id], now));
+    const fresh = all.filter((p) => !deck[p.id]).slice(0, NEW_PER_SESSION);
+    return [...seen, ...fresh];
+  }, [all, deck, now]);
+  const current = queue[0];
+  const learned = Object.keys(deck).length;
 
   const grade = (g: Grade, at: number) => {
     if (!current) return;
@@ -39,13 +40,21 @@ export function Review() {
 
   return (
     <section aria-labelledby="review-h" className="review">
+      <div className="crumbs">
+        <a href={href.home}>topics</a>
+        <span aria-hidden="true">/</span>
+        <span>review</span>
+      </div>
       <h2 id="review-h">Review</h2>
       <p className="muted" role="status">
-        {due.length} of {PROBLEMS.length} due. Progress is stored only in this browser.
+        {queue.length} to review now · {learned} of {all.length} learned. Progress is stored only in
+        this browser.
       </p>
       {current ? (
-        <div className="card">
-          <h3>{current.title}</h3>
+        <div className="card flash">
+          <p className="eyebrow">
+            {current.title} <span className="mono muted">· {current.difficulty}</span>
+          </p>
           <p>{current.summary}</p>
           <p>
             <strong>Which pattern fits, and why?</strong>
@@ -56,9 +65,9 @@ export function Review() {
                 <strong>{current.pattern}.</strong> {current.hook}
               </p>
               <div className="grades" role="group" aria-label="How well did you remember?">
-                {GRADES.map(({ g, label }) => (
+                {GRADES.map(({ g, label, hint }) => (
                   <button key={g} onClick={() => grade(g, Date.now())}>
-                    {label}
+                    {label} <span className="muted small">{hint}</span>
                   </button>
                 ))}
               </div>
@@ -73,7 +82,9 @@ export function Review() {
         <p className="card">All caught up. Come back when cards are due.</p>
       )}
       <div className="row">
-        <button onClick={() => download('veyra-anki.txt', toAnkiTsv(PROBLEMS))}>
+        <button
+          onClick={() => download('veyra-anki.txt', toAnkiTsv(all), 'text/tab-separated-values')}
+        >
           Export Anki cards
         </button>
         <button

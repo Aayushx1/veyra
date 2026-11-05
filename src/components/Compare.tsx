@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { Problem } from '../problems';
-import { SCALES } from '../problems/scale';
+import { Race } from './Race';
+import { scaleOf, type Problem } from '../problems';
 import { traceInWorker } from '../lib/client';
 
 interface Point {
@@ -15,7 +15,7 @@ const PAD = { l: 52, r: 16, t: 14, b: 32 };
 
 /** Runs both solutions across growing input sizes and charts statements executed. */
 export function Compare({ problem }: { problem: Problem }) {
-  const scale = SCALES[problem.id];
+  const scale = scaleOf(problem);
   const [state, setState] = useState<{ id: string; points?: Point[]; err?: string } | null>(null);
 
   useEffect(() => {
@@ -103,6 +103,7 @@ export function Compare({ problem }: { problem: Problem }) {
           <span className="sw s-b" /> {sb.label} <em>{sb.complexity}</em>
         </li>
       </ul>
+      <Race points={points} labels={[sa.label, sb.label]} />
       <table className="data">
         <caption>Statements executed (worst-case style input)</caption>
         <thead>
